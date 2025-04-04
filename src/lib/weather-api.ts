@@ -1,92 +1,88 @@
 import axios from 'axios';
 
-// 날씨 API의 기본 URL (실제 API 키는 환경 변수로 관리하는 것이 좋습니다)
+// WeatherAPI.com API 설정 (실제 API 키는 환경 변수로 관리하는 것이 좋습니다)
 const API_KEY = process.env.NEXT_PUBLIC_WEATHER_API_KEY || 'YOUR_API_KEY';
-const BASE_URL = 'https://api.openweathermap.org/data/2.5';
+const BASE_URL = 'https://api.weatherapi.com/v1';
 
-// 날씨 데이터 타입
+// 날씨 데이터 타입 정의
 export interface WeatherData {
+  location: {
+    name: string;
+    region: string;
+    country: string;
+    lat: number;
+    lon: number;
+    localtime: string;
+  };
   current: {
-    temp: number;
-    feels_like: number;
-    humidity: number;
-    wind_speed: number;
-    weather: Array<{
-      id: number;
-      main: string;
-      description: string;
+    temp_c: number;
+    condition: {
+      text: string;
       icon: string;
+      code: number;
+    };
+    wind_kph: number;
+    wind_dir: string;
+    humidity: number;
+    feelslike_c: number;
+    uv: number;
+    is_day: number;
+  };
+  forecast: {
+    forecastday: Array<{
+      date: string;
+      date_epoch: number;
+      day: {
+        maxtemp_c: number;
+        mintemp_c: number;
+        avgtemp_c: number;
+        condition: {
+          text: string;
+          icon: string;
+          code: number;
+        };
+      };
+      hour: Array<{
+        time: string;
+        time_epoch: number;
+        temp_c: number;
+        condition: {
+          text: string;
+          icon: string;
+          code: number;
+        };
+        chance_of_rain: number;
+      }>;
     }>;
   };
-  hourly: Array<{
-    dt: number;
-    temp: number;
-    weather: Array<{
-      id: number;
-      main: string;
-      description: string;
-      icon: string;
-    }>;
-  }>;
-  daily: Array<{
-    dt: number;
-    temp: {
-      min: number;
-      max: number;
-    };
-    weather: Array<{
-      id: number;
-      main: string;
-      description: string;
-      icon: string;
-    }>;
-  }>;
-  monthly?: Array<{
-    dt: number;
-    temp: {
-      min: number;
-      max: number;
-    };
-  }>;
 }
 
 // 위치 정보 타입
 export interface LocationData {
   name: string;
+  region: string;
   country: string;
   lat: number;
   lon: number;
-}
-
-// 위치 API 응답 타입
-interface LocationApiResponse {
-  name: string;
-  country: string;
-  lat: number;
-  lon: number;
-  [key: string]: unknown;
+  url: string;
 }
 
 // 날씨 API 호출 함수
-export const getWeatherData = async (lat: number, lon: number): Promise<WeatherData> => {
+export const getWeatherData = async (
+  query: string
+): Promise<WeatherData> => {
   try {
-    const response = await axios.get(`${BASE_URL}/onecall`, {
+    const response = await axios.get(`${BASE_URL}/forecast.json`, {
       params: {
-        lat,
-        lon,
-        units: 'metric', // 섭씨 온도 단위 사용
-        exclude: 'minutely,alerts',
-        appid: API_KEY,
+        key: API_KEY,
+        q: query,
+        days: 7,
+        aqi: 'no',
+        alerts: 'no',
       },
     });
-    
-    // 실제 API에서는 월간 데이터를 제공하지 않으므로 일일 데이터를 가공하여 월간 데이터 생성
-    const monthlyData = generateMonthlyData(response.data.daily);
-    
-    return {
-      ...response.data,
-      monthly: monthlyData,
-    };
+
+    return response.data;
   } catch (error) {
     console.error('날씨 데이터를 가져오는 중 오류가 발생했습니다:', error);
     throw error;
@@ -96,64 +92,63 @@ export const getWeatherData = async (lat: number, lon: number): Promise<WeatherD
 // 위치 검색 함수
 export const searchLocation = async (query: string): Promise<LocationData[]> => {
   try {
-    const response = await axios.get('https://api.openweathermap.org/geo/1.0/direct', {
+    const response = await axios.get(`${BASE_URL}/search.json`, {
       params: {
+        key: API_KEY,
         q: query,
-        limit: 5,
-        appid: API_KEY,
       },
     });
-    
-    return response.data.map((location: LocationApiResponse) => ({
-      name: location.name,
-      country: location.country,
-      lat: location.lat,
-      lon: location.lon,
-    }));
+
+    return response.data;
   } catch (error) {
     console.error('위치 데이터를 가져오는 중 오류가 발생했습니다:', error);
     throw error;
   }
 };
 
-// 일일 날씨 데이터 타입
-interface DailyWeatherData {
-  temp: {
-    min: number;
-    max: number;
-  };
-  [key: string]: unknown;
-}
-
-// 월간 데이터 생성 (실제 API가 제공하지 않으므로 모의 데이터 생성)
-const generateMonthlyData = (dailyData: DailyWeatherData[]) => {
-  // 현재 날짜로부터 한 달간의 날씨 데이터 생성 (실제로는 7일치만 있으므로 모의 데이터 생성)
-  const today = new Date();
+// 월간 날씨 데이터 생성 (API가 제공하지 않으므로 모의 데이터 생성)
+export const generateMonthlyData = (forecastData: WeatherData['forecast']['forecastday']) => {
+  // 월간 데이터를 위한 배열 (30일)
   const monthlyData = [];
   
-  // 30일간의 데이터 생성
-  for (let i = 0; i < 30; i++) {
-    const date = new Date();
-    date.setDate(today.getDate() + i);
+  // 가지고 있는 예보 데이터를 사용
+  for (let i = 0; i < forecastData.length; i++) {
+    monthlyData.push({
+      date: forecastData[i].date,
+      date_epoch: forecastData[i].date_epoch,
+      day: {
+        maxtemp_c: forecastData[i].day.maxtemp_c,
+        mintemp_c: forecastData[i].day.mintemp_c,
+        condition: forecastData[i].day.condition,
+      }
+    });
+  }
+  
+  // 나머지 날짜는 모의 데이터 생성 (30일까지)
+  const daysToGenerate = 30 - forecastData.length;
+  if (daysToGenerate > 0) {
+    const lastDay = new Date(forecastData[forecastData.length - 1].date);
     
-    // 7일치 데이터는 API에서 가져온 것 사용, 나머지는 모의 데이터 생성
-    if (i < dailyData.length) {
+    for (let i = 1; i <= daysToGenerate; i++) {
+      const newDate = new Date(lastDay);
+      newDate.setDate(lastDay.getDate() + i);
+      
+      // 무작위로 기존 데이터에서 날씨 조건 선택
+      const randomIndex = Math.floor(Math.random() * forecastData.length);
+      const randomCondition = forecastData[randomIndex].day.condition;
+      
+      // 온도 범위 무작위 생성 (기존 데이터 기반으로 약간의 변동)
+      const baseTemp = forecastData[randomIndex].day.avgtemp_c;
+      const randomVariation = Math.random() * 5 - 2.5; // -2.5~2.5 사이 변동
+      
       monthlyData.push({
-        dt: Math.floor(date.getTime() / 1000),
-        temp: {
-          min: dailyData[i].temp.min,
-          max: dailyData[i].temp.max,
-        },
-      });
-    } else {
-      // 모의 데이터 생성 (실제 날씨 앱에서는 사용하지 않음)
-      const randomIndex = Math.floor(Math.random() * dailyData.length);
-      monthlyData.push({
-        dt: Math.floor(date.getTime() / 1000),
-        temp: {
-          min: dailyData[randomIndex].temp.min,
-          max: dailyData[randomIndex].temp.max,
-        },
+        date: newDate.toISOString().split('T')[0],
+        date_epoch: Math.floor(newDate.getTime() / 1000),
+        day: {
+          maxtemp_c: baseTemp + 3 + randomVariation,
+          mintemp_c: baseTemp - 3 + randomVariation,
+          condition: randomCondition,
+        }
       });
     }
   }
