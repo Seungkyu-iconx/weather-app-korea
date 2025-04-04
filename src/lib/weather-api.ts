@@ -58,13 +58,13 @@ export interface LocationData {
   lon: number;
 }
 
-// OpenWeatherMap 위치 응답 타입
-interface LocationResponse {
+// 위치 API 응답 타입
+interface LocationApiResponse {
   name: string;
   country: string;
   lat: number;
   lon: number;
-  [key: string]: string | number;
+  [key: string]: unknown;
 }
 
 // 날씨 API 호출 함수
@@ -104,7 +104,7 @@ export const searchLocation = async (query: string): Promise<LocationData[]> => 
       },
     });
     
-    return response.data.map((location: LocationResponse) => ({
+    return response.data.map((location: LocationApiResponse) => ({
       name: location.name,
       country: location.country,
       lat: location.lat,
@@ -116,8 +116,8 @@ export const searchLocation = async (query: string): Promise<LocationData[]> => 
   }
 };
 
+// 일일 날씨 데이터 타입
 interface DailyWeatherData {
-  dt: number;
   temp: {
     min: number;
     max: number;
