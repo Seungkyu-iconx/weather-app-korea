@@ -1,103 +1,120 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from 'react';
+import { getWeatherData, WeatherData } from '@/lib/weather-api';
+import { CurrentWeather } from '@/components/CurrentWeather';
+import { HourlyWeather } from '@/components/HourlyWeather';
+import { WeeklyWeather } from '@/components/WeeklyWeather';
+import { MonthlyWeather } from '@/components/MonthlyWeather';
+import { LocationSearch } from '@/components/LocationSearch';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+  const [location, setLocation] = useState({ name: '서울', country: 'KR' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  
+  // 기본 위치 (서울)
+  const defaultLat = 37.5665;
+  const defaultLon = 126.9780;
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // 위치 기반 날씨 데이터 로드
+  const loadWeatherData = async (lat: number, lon: number) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const data = await getWeatherData(lat, lon);
+      setWeatherData(data);
+    } catch (err) {
+      setError('날씨 데이터를 불러오는 중 오류가 발생했습니다.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 위치 선택 핸들러
+  const handleSelectLocation = (lat: number, lon: number, name: string, country: string) => {
+    setLocation({ name, country });
+    loadWeatherData(lat, lon);
+    setShowSearch(false);
+  };
+
+  // 컴포넌트 마운트 시 기본 위치 날씨 로드
+  useEffect(() => {
+    loadWeatherData(defaultLat, defaultLon);
+  }, []);
+
+  // 사용자 위치 가져오기
+  const getUserLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          loadWeatherData(position.coords.latitude, position.coords.longitude);
+          setLocation({ name: '현재 위치', country: '' });
+        },
+        (err) => {
+          console.error('위치 정보를 가져오는 중 오류가 발생했습니다:', err);
+          setError('위치 정보를 가져오는 중 오류가 발생했습니다. 기본 위치를 사용합니다.');
+          loadWeatherData(defaultLat, defaultLon);
+        }
+      );
+    } else {
+      setError('브라우저가 위치 정보를 지원하지 않습니다. 기본 위치를 사용합니다.');
+      loadWeatherData(defaultLat, defaultLon);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 md:px-8">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">날씨 앱</h1>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowSearch(!showSearch)}>
+              {showSearch ? '검색 닫기' : '도시 검색'}
+            </Button>
+            <Button variant="outline" onClick={getUserLocation}>
+              내 위치
+            </Button>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {showSearch && (
+          <LocationSearch onSelectLocation={handleSelectLocation} />
+        )}
+
+        {error && (
+          <Card className="p-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+            <p className="text-red-600 dark:text-red-400">{error}</p>
+          </Card>
+        )}
+
+        {loading ? (
+          <div className="py-20 text-center">
+            <p>날씨 데이터를 불러오는 중...</p>
+          </div>
+        ) : weatherData ? (
+          <div className="space-y-6">
+            <CurrentWeather 
+              currentData={weatherData.current} 
+              location={location} 
+            />
+            
+            <HourlyWeather hourlyData={weatherData.hourly} />
+            
+            <WeeklyWeather dailyData={weatherData.daily} />
+            
+            {weatherData.monthly && (
+              <MonthlyWeather monthlyData={weatherData.monthly} />
+            )}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
