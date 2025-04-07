@@ -8,7 +8,7 @@ Next.js와 React로 개발된, 시간별/주간/월간 날씨 정보를 제공�
 - 시간별 날씨 예보 (24시간, 강수 확률 포함)
 - 주간 날씨 예보 (7일, 온도 범위 시각화)
 - 월간 날씨 예보 (30일, 페이지네이션 지원)
-- 도시 및 지역 검색 기능 (전 세계 지역 검색)
+- 도시 및 지역 검색 기능 (한국 주요 도시)
 - 현재 위치 기반 날씨 정보
 - 낮/밤에 따른 UI 테마 자동 변경
 
@@ -19,7 +19,7 @@ Next.js와 React로 개발된, 시간별/주간/월간 날씨 정보를 제공�
 - [TypeScript](https://www.typescriptlang.org/) - 정적 타입 언어
 - [Tailwind CSS](https://tailwindcss.com/) - 스타일링
 - [Shadcn UI](https://ui.shadcn.com/) - UI 컴포넌트
-- [WeatherAPI.com](https://www.weatherapi.com/) - 날씨 데이터
+- 더미 데이터 - 실제 API 대신 사용
 
 ## 시작하기
 
@@ -43,21 +43,23 @@ npm install
 yarn
 ```
 
-3. 환경 변수 설정:
-`.env.local` 파일을 생성하고 WeatherAPI.com API 키 추가:
-```
-NEXT_PUBLIC_WEATHER_API_KEY=your_api_key_here
-```
-API 키는 [WeatherAPI.com](https://www.weatherapi.com/)에서 무료로 발급받을 수 있습니다.
-
-4. 개발 서버 실행:
+3. 개발 서버 실행:
 ```bash
 npm run dev
 # or
 yarn dev
 ```
 
-5. 브라우저에서 [http://localhost:3000](http://localhost:3000) 접속
+4. 브라우저에서 [http://localhost:3000](http://localhost:3000) 접속
+
+5. 빌드 및 프로덕션 실행:
+```bash
+npm run build
+npm run start
+# or
+yarn build
+yarn start
+```
 
 ## 기능 소개
 
@@ -77,25 +79,17 @@ yarn dev
 - 오늘/내일 표시 및 한글 요일 정보
 
 ### 월간 날씨
-- 30일 동안의 날씨 예보 제공 (일부 모의 데이터 포함)
+- 30일 동안의 날씨 예보 제공 (모의 데이터)
 - 페이지네이션으로 편리한 탐색 기능
 - 날짜, 요일, 최고/최저 온도 제공
 
-## 빌드 및 배포
+## 더미 데이터 구현 안내
 
-프로덕션 버전 빌드:
-```bash
-npm run build
-# or
-yarn build
-```
+이 앱은 API 대신 로컬에서 생성된 더미 데이터를 사용합니다:
 
-프로덕션 서버 실행:
-```bash
-npm run start
-# or
-yarn start
-```
+- 현재 시간과, 계절에 따라 적절한 날씨 데이터가 생성됩니다.
+- 서울, 부산, 인천, 대구, 대전 등 한국의 주요 도시 정보가 포함되어 있습니다.
+- 실제 API 없이도 모든 기능을 확인할 수 있습니다.
 
 ## 라이센스
 

@@ -1,8 +1,4 @@
-import axios from 'axios';
-
-// WeatherAPI.com API 설정 (실제 API 키는 환경 변수로 관리하는 것이 좋습니다)
-const API_KEY = process.env.NEXT_PUBLIC_WEATHER_API_KEY || 'YOUR_API_KEY';
-const BASE_URL = 'https://api.weatherapi.com/v1';
+import { generateDummyWeatherData, generateSearchResults, dummyLocations } from './dummy-weather-data';
 
 // 날씨 데이터 타입 정의
 export interface WeatherData {
@@ -67,46 +63,51 @@ export interface LocationData {
   url: string;
 }
 
-// 날씨 API 호출 함수
+// 날씨 API 호출 함수 (더미 데이터 사용)
 export const getWeatherData = async (
   query: string
 ): Promise<WeatherData> => {
   try {
-    const response = await axios.get(`${BASE_URL}/forecast.json`, {
-      params: {
-        key: API_KEY,
-        q: query,
-        days: 7,
-        aqi: 'no',
-        alerts: 'no',
-      },
-    });
-
-    return response.data;
+    // 쿼리로 위치 인덱스 찾기 (좌표값 처리)
+    let locationIndex = 0;
+    
+    if (query.includes(',')) {
+      // 좌표값일 경우 서울을 기본값으로 사용
+      locationIndex = 0;
+    } else {
+      // 도시 이름으로 검색
+      const lowerQuery = query.toLowerCase();
+      const foundIndex = dummyLocations.findIndex(
+        loc => loc.name.toLowerCase() === lowerQuery || loc.region.toLowerCase() === lowerQuery
+      );
+      
+      locationIndex = foundIndex !== -1 ? foundIndex : 0;
+    }
+    
+    // 지연 시간 추가 (API 호출 시뮬레이션)
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return generateDummyWeatherData(locationIndex);
   } catch (error) {
     console.error('날씨 데이터를 가져오는 중 오류가 발생했습니다:', error);
     throw error;
   }
 };
 
-// 위치 검색 함수
+// 위치 검색 함수 (더미 데이터 사용)
 export const searchLocation = async (query: string): Promise<LocationData[]> => {
   try {
-    const response = await axios.get(`${BASE_URL}/search.json`, {
-      params: {
-        key: API_KEY,
-        q: query,
-      },
-    });
-
-    return response.data;
+    // 지연 시간 추가 (API 호출 시뮬레이션)
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    return generateSearchResults(query);
   } catch (error) {
     console.error('위치 데이터를 가져오는 중 오류가 발생했습니다:', error);
     throw error;
   }
 };
 
-// 월간 날씨 데이터 생성 (API가 제공하지 않으므로 모의 데이터 생성)
+// 월간 날씨 데이터 생성 
 export const generateMonthlyData = (forecastData: WeatherData['forecast']['forecastday']) => {
   // 월간 데이터를 위한 배열 (30일)
   const monthlyData = [];
