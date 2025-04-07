@@ -20,6 +20,7 @@ interface MonthlyForecast {
     condition: {
       text: string;
       icon: string;
+      code: number;
     };
   };
 }

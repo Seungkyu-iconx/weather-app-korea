@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { Card } from './ui/card';
-import Image from 'next/image';
+import { WeatherIcon } from './WeatherIcon';
 
 interface HourlyWeatherProps {
   hourlyData: Array<{
@@ -11,6 +11,7 @@ interface HourlyWeatherProps {
     condition: {
       text: string;
       icon: string;
+      code: number;
     };
     chance_of_rain: number;
   }>;
@@ -34,10 +35,11 @@ export const HourlyWeather: React.FC<HourlyWeatherProps> = ({ hourlyData }) => {
       
       <div className="flex overflow-x-auto pb-2 gap-3 scrollbar-thin scrollbar-thumb-gray-300">
         {next24Hours.map((hour) => {
-          // 아이콘 URL에서 http를 https로 변경
-          const iconUrl = hour.condition.icon.replace('http:', 'https:');
           const time = new Date(hour.time);
           const isNow = new Date().getHours() === time.getHours();
+          
+          // 시간에 따라 낮/밤 판단 (6시~18시: 낮)
+          const isDay = time.getHours() >= 6 && time.getHours() < 18;
           
           return (
             <div 
@@ -51,13 +53,14 @@ export const HourlyWeather: React.FC<HourlyWeatherProps> = ({ hourlyData }) => {
               <span className="text-sm font-medium mb-1">
                 {format(time, 'HH:mm')}
               </span>
-              <Image
-                src={iconUrl}
-                alt={hour.condition.text}
-                width={48}
-                height={48}
-                className="my-1"
-              />
+              <div className="my-1">
+                <WeatherIcon 
+                  code={hour.condition.code} 
+                  isDay={isDay} 
+                  text={hour.condition.text} 
+                  size="md" 
+                />
+              </div>
               <span className="font-bold text-lg">{Math.round(hour.temp_c)}°</span>
               
               {hour.chance_of_rain > 0 && (

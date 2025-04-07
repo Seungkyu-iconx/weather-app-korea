@@ -1,8 +1,8 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { Card } from './ui/card';
-import Image from 'next/image';
 import { ko } from 'date-fns/locale';
+import { WeatherIcon } from './WeatherIcon';
 
 interface WeeklyWeatherProps {
   dailyData: Array<{
@@ -14,6 +14,7 @@ interface WeeklyWeatherProps {
       condition: {
         text: string;
         icon: string;
+        code: number;
       };
     };
   }>;
@@ -40,8 +41,6 @@ export const WeeklyWeather: React.FC<WeeklyWeatherProps> = ({ dailyData }) => {
       
       <div className="space-y-3">
         {dailyData.map((day) => {
-          // 아이콘 URL에서 http를 https로 변경
-          const iconUrl = day.day.condition.icon.replace('http:', 'https:');
           const date = new Date(day.date);
           
           // 오늘, 내일 표시
@@ -74,11 +73,11 @@ export const WeeklyWeather: React.FC<WeeklyWeatherProps> = ({ dailyData }) => {
                   </span>
                 </div>
                 <div className="flex items-center">
-                  <Image
-                    src={iconUrl}
-                    alt={day.day.condition.text}
-                    width={36}
-                    height={36}
+                  <WeatherIcon 
+                    code={day.day.condition.code} 
+                    isDay={true} 
+                    text={day.day.condition.text} 
+                    size="sm" 
                   />
                   <span className="ml-2 text-sm">{day.day.condition.text}</span>
                 </div>

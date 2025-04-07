@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from './ui/card';
-import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { WeatherIcon } from './WeatherIcon';
 
 interface CurrentWeatherProps {
   currentData: {
@@ -13,6 +13,7 @@ interface CurrentWeatherProps {
     condition: {
       text: string;
       icon: string;
+      code: number;
     };
     uv: number;
     is_day: number;
@@ -28,9 +29,6 @@ interface CurrentWeatherProps {
 export const CurrentWeather: React.FC<CurrentWeatherProps> = ({ currentData, location }) => {
   // 낮/밤 상태에 따른 배경 및 텍스트 색상 조정
   const isDay = currentData.is_day === 1;
-  
-  // 아이콘 URL에서 http를 https로 변경
-  const iconUrl = currentData.condition.icon.replace('http:', 'https:');
   
   // 풍향 표시 함수
   const getWindDirection = (dir: string) => {
@@ -78,13 +76,14 @@ export const CurrentWeather: React.FC<CurrentWeatherProps> = ({ currentData, loc
                 <span className="text-sm font-medium">{currentData.condition.text}</span>
                 <span className="text-xs opacity-75">체감온도: {Math.round(currentData.feelslike_c)}°</span>
               </div>
-              <Image
-                src={iconUrl}
-                alt={currentData.condition.text}
-                width={80}
-                height={80}
-                className="ml-4"
-              />
+              <div className="ml-4">
+                <WeatherIcon 
+                  code={currentData.condition.code} 
+                  isDay={isDay} 
+                  text={currentData.condition.text} 
+                  size="lg" 
+                />
+              </div>
             </div>
           </div>
           
